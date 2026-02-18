@@ -223,6 +223,32 @@
     <div class="savings-card projected" id="fteProjected"></div>
   </div>
 
+  <!-- Conversation Utilization -->
+  <div class="section-title" style="margin-top:36px;"><span class="dot"></span> Conversation Utilization</div>
+
+  <div class="fixed-bar" style="flex-direction:column; gap:16px;">
+    <div style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--g400);">Conversations in Contract</div>
+    <div style="display:flex; gap:32px; flex-wrap:wrap;">
+      <div class="fixed-item">
+        <span class="fixed-label">Messaging Conversations</span>
+        <span class="fixed-value">1,100,000</span>
+      </div>
+      <div class="fixed-item">
+        <span class="fixed-label">Messaging Swap from Voice</span>
+        <span class="fixed-value">192,969</span>
+      </div>
+      <div class="fixed-item">
+        <span class="fixed-label">Total Available till May 2026</span>
+        <span class="fixed-value" style="color:var(--iherb);">1,292,969</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="savings-grid" style="margin-top:16px;">
+    <div class="savings-card actual" id="utilizationActual"></div>
+    <div class="savings-card projected" id="utilizationProjected" style="border-color:var(--iherb-bg2); background:var(--iherb-bg);"></div>
+  </div>
+
   <div class="footer">
     <p>Powered by <a href="https://www.ada.cx" target="_blank">ada</a> · Data from Ada Analytics</p>
   </div>
@@ -367,6 +393,43 @@ function calc() {
     '<div class="savings-row"><span class="sr-label">Projected Total Agent Hours</span><span class="sr-value">' + fmtN(projectedTotalHours) + '</span></div>' +
     '<div class="savings-row highlight"><span class="sr-label">Projected FTE Equivalent</span><span class="sr-value big green">' + fteProjectedTotal.toFixed(1) + '</span></div>' +
     '<div class="savings-row"><span class="sr-label" style="font-size:11px;color:var(--g400)">Extrapolated from 3-month avg utilization trend</span><span class="sr-value"></span></div>';
+
+  // ---- Conversation Utilization ----
+  var TOTAL_CONTRACT_CONVOS = 1292969;
+  var usedConvos = totalEngaged; // engaged convos used till date
+  var remainingConvos = TOTAL_CONTRACT_CONVOS - usedConvos;
+  var utilizationPct = (usedConvos / TOTAL_CONTRACT_CONVOS) * 100;
+  var projectedFullTerm = usedConvos + (avgMonthlyEngaged * MONTHS_REMAINING);
+  var projectedUtilPct = (projectedFullTerm / TOTAL_CONTRACT_CONVOS) * 100;
+
+  // Date by which 100% utilization is reached
+  // We know usedConvos as of end of Feb 2026, avg monthly rate from last 3 months
+  var convosNeeded = TOTAL_CONTRACT_CONVOS - usedConvos;
+  var monthsTo100 = avgMonthlyEngaged > 0 ? convosNeeded / avgMonthlyEngaged : 0;
+
+  // Start from March 2026 (month after last data)
+  var baseDate = new Date(2026, 2, 1); // March 1, 2026
+  var targetDate = new Date(baseDate);
+  targetDate.setMonth(targetDate.getMonth() + Math.floor(monthsTo100));
+  var fractionalDays = (monthsTo100 - Math.floor(monthsTo100)) * 30;
+  targetDate.setDate(targetDate.getDate() + Math.round(fractionalDays));
+
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var targetDateStr = monthNames[targetDate.getMonth()] + ' ' + targetDate.getDate() + ', ' + targetDate.getFullYear();
+
+  document.getElementById('utilizationActual').innerHTML =
+    '<div class="savings-card-title">Current Utilization</div>' +
+    '<div class="savings-row"><span class="sr-label">Engaged Conversations Used</span><span class="sr-value">' + fmtN(usedConvos) + '</span></div>' +
+    '<div class="savings-row"><span class="sr-label">Total Contract Conversations</span><span class="sr-value">' + fmtN(TOTAL_CONTRACT_CONVOS) + '</span></div>' +
+    '<div class="savings-row"><span class="sr-label">Remaining</span><span class="sr-value">' + fmtN(remainingConvos) + '</span></div>' +
+    '<div class="savings-row highlight"><span class="sr-label">Utilization to Date</span><span class="sr-value big green">' + utilizationPct.toFixed(1) + '%</span></div>';
+
+  document.getElementById('utilizationProjected').innerHTML =
+    '<div class="savings-card-title">Projected Utilization & Renewal</div>' +
+    '<div class="savings-row"><span class="sr-label">Projected Utilization (End of Contract)</span><span class="sr-value green">' + fmtN(Math.round(projectedFullTerm)) + ' (' + projectedUtilPct.toFixed(0) + '%)</span></div>' +
+    '<div class="savings-row"><span class="sr-label">Avg Monthly Engaged (3-mo trend)</span><span class="sr-value">' + fmtN(Math.round(avgMonthlyEngaged)) + '</span></div>' +
+    '<div class="savings-row highlight"><span class="sr-label">100% Utilization Reached</span><span class="sr-value big green">' + targetDateStr + '</span></div>' +
+    '<div class="savings-row highlight"><span class="sr-label">Proposed Renewal Date</span><span class="sr-value big" style="color:var(--iherb-dark);">' + targetDateStr + '</span></div>';
 }
 
 calc();
